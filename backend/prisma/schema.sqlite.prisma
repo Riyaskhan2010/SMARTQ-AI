@@ -1,18 +1,15 @@
-// SmartQ AI - Prisma Schema
-// Production: PostgreSQL (Render)
-// Local dev:  run `npm run db:use-sqlite` to switch to SQLite
+// SmartQ AI - LOCAL DEVELOPMENT SCHEMA (SQLite)
+// To use locally: npm run db:use-sqlite
+// Then set DATABASE_URL="file:./smartq.db" in backend/.env
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
-
-// All enum fields use String for SQLite compatibility
-// Valid values documented in comments
 
 model User {
   id           String   @id @default(uuid())
@@ -20,7 +17,7 @@ model User {
   email        String   @unique
   phone        String?
   passwordHash String
-  role         String   @default("USER")       // USER | ADMIN | STAFF
+  role         String   @default("USER")
   language     String   @default("en")
   isActive     Boolean  @default(true)
   isDemo       Boolean  @default(false)
@@ -119,7 +116,7 @@ model Counter {
   departmentId String
   name         String
   number       Int
-  status       String   @default("CLOSED")     // OPEN | CLOSED | PAUSED
+  status       String   @default("CLOSED")
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -183,7 +180,7 @@ model Token {
   serviceId     String
   counterId     String?
   tokenNumber   String
-  status        String   @default("WAITING")   // WAITING | SERVING | COMPLETED | NO_SHOW | CANCELLED
+  status        String   @default("WAITING")
   position      Int
   isFollowUp    Boolean  @default(false)
   prevVisitDate DateTime?
@@ -211,7 +208,7 @@ model Appointment {
   serviceId     String
   scheduledDate DateTime
   scheduledTime String
-  status        String   @default("BOOKED")    // BOOKED | CONFIRMED | COMPLETED | CANCELLED | NO_SHOW
+  status        String   @default("BOOKED")
   tokenNumber   String?
   notes         String?
   isFollowUp    Boolean  @default(false)
@@ -246,10 +243,10 @@ model VisitHistory {
 model Notification {
   id        String   @id @default(uuid())
   userId    String
-  type      String                           // TOKEN_BOOKED | TOKEN_CALLED | ETA_UPDATED | SYSTEM ...
+  type      String
   title     String
   message   String
-  data      String?                          // JSON stored as text
+  data      String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -264,7 +261,7 @@ model QueueEvent {
   tokenId     String?
   counterId   String?
   eventType   String
-  data        String?                        // JSON stored as text
+  data        String?
   triggeredBy String?
   createdAt   DateTime @default(now())
 
@@ -275,7 +272,7 @@ model Prediction {
   id             String   @id @default(uuid())
   queueId        String
   estimatedWait  Int
-  crowdLevel     String                       // LOW | MEDIUM | HIGH | VERY_HIGH
+  crowdLevel     String
   confidence     Float
   activeCounters Int
   waitingCount   Int
@@ -302,20 +299,16 @@ model Recommendation {
   @@map("recommendations")
 }
 
-// ============================================================
-// CANTEEN FEATURE
-// ============================================================
-
 model CanteenOrg {
-  id             String   @id @default(uuid())
-  organizationId String   @unique     // links to Organization
-  name           String               // e.g. "SRM Canteen"
-  isOpen         Boolean  @default(true)
-  openTime       String   @default("07:00")
-  closeTime      String   @default("21:00")
-  lastOrderNumber Int     @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(uuid())
+  organizationId  String   @unique
+  name            String
+  isOpen          Boolean  @default(true)
+  openTime        String   @default("07:00")
+  closeTime       String   @default("21:00")
+  lastOrderNumber Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   counters CanteenCounter[]
   orders   CanteenOrder[]
@@ -326,15 +319,15 @@ model CanteenOrg {
 model CanteenCounter {
   id           String   @id @default(uuid())
   canteenOrgId String
-  name         String                     // "Counter 1 — Beverages & Snacks"
-  type         String                     // BEVERAGES | MEALS
+  name         String
+  type         String
   number       Int
-  status       String   @default("OPEN")  // OPEN | CLOSED | PAUSED
+  status       String   @default("OPEN")
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  canteenOrg  CanteenOrg   @relation(fields: [canteenOrgId], references: [id])
+  canteenOrg  CanteenOrg         @relation(fields: [canteenOrgId], references: [id])
   menuItems   MenuItem[]
   orderItems  CanteenOrderItem[]
 
@@ -347,39 +340,39 @@ model MenuItem {
   name             String
   description      String?
   price            Float    @default(0)
-  category         String   @default("GENERAL")  // BEVERAGES | MEALS | SNACKS
-  mealPeriod       String   @default("ALL")       // ALL | MORNING | AFTERNOON | EVENING | NIGHT
-  avgPrepTime      Int      @default(5)           // minutes
-  availability     String   @default("AVAILABLE") // AVAILABLE | SOLD_OUT | UNAVAILABLE
+  category         String   @default("GENERAL")
+  mealPeriod       String   @default("ALL")
+  avgPrepTime      Int      @default(5)
+  availability     String   @default("AVAILABLE")
   isActive         Boolean  @default(true)
   sortOrder        Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  counter    CanteenCounter @relation(fields: [canteenCounterId], references: [id])
+  counter    CanteenCounter    @relation(fields: [canteenCounterId], references: [id])
   orderItems CanteenOrderItem[]
 
   @@map("menu_items")
 }
 
 model CanteenOrder {
-  id           String   @id @default(uuid())
-  canteenOrgId String
-  userId       String?
-  guestName    String?
-  orderNumber  String                              // C101, C102, etc.
-  status       String   @default("PLACED")         // PLACED | CONFIRMED | PREPARING | READY | COLLECTED | CANCELLED
-  totalAmount  Float    @default(0)
-  notes        String?
-  estimatedReadyTime Int?                          // minutes
+  id                 String   @id @default(uuid())
+  canteenOrgId       String
+  userId             String?
+  guestName          String?
+  orderNumber        String
+  status             String   @default("PLACED")
+  totalAmount        Float    @default(0)
+  notes              String?
+  estimatedReadyTime Int?
   actualReadyTime    Int?
-  placedAt     DateTime @default(now())
-  confirmedAt  DateTime?
-  prepStartAt  DateTime?
-  readyAt      DateTime?
-  collectedAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  placedAt           DateTime @default(now())
+  confirmedAt        DateTime?
+  prepStartAt        DateTime?
+  readyAt            DateTime?
+  collectedAt        DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   canteenOrg CanteenOrg         @relation(fields: [canteenOrgId], references: [id])
   items      CanteenOrderItem[]
@@ -392,7 +385,7 @@ model CanteenOrderItem {
   orderId          String
   menuItemId       String
   canteenCounterId String
-  name             String                         // snapshot of item name
+  name             String
   price            Float
   quantity         Int      @default(1)
   createdAt        DateTime @default(now())

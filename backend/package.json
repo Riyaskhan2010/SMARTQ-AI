@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "db:migrate": "npx prisma migrate dev",
+    "db:use-sqlite": "node scripts/use-sqlite.js && npx prisma generate",
+    "db:use-pg": "node scripts/use-postgres.js && npx prisma generate",
+    "db:push": "npx prisma db push",
     "db:seed": "node prisma/seed.js",
-    "db:reset": "npx prisma migrate reset --force && node prisma/seed.js",
+    "db:reset-local": "node scripts/use-sqlite.js && npx prisma generate && npx prisma db push --force-reset && node prisma/seed.js",
     "db:studio": "npx prisma studio"
   },
   "dependencies": {
