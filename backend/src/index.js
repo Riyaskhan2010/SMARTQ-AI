@@ -9,13 +9,32 @@ const { setupSocketHandlers } = require('./services/socketService');
 const app = express();
 const server = http.createServer(app);
 
+// ── CORS origin list ──────────────────────────────────────────────
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:4173',
+  // Production — add your exact Render frontend URL here
+  'https://smartq-ai-frontend.onrender.com',
+  // Allow any onrender.com subdomain for flexibility
+];
+
+function corsOrigin(origin, callback) {
+  // Allow requests with no origin (curl, mobile, Postman)
+  if (!origin) return callback(null, true);
+  // Allow any onrender.com subdomain
+  if (origin.endsWith('.onrender.com')) return callback(null, true);
+  // Allow localhost in any form
+  if (origin.includes('localhost') || origin.includes('127.0.0.1')) return callback(null, true);
+  // Allow explicit list
+  if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+  // Allow if FRONTEND_URL env matches
+  if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
+  callback(new Error(`CORS blocked: ${origin}`));
+}
+
 // ── Socket.IO ────────────────────────────────────────────────────
 const io = new Server(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
+  cors: { origin: corsOrigin, methods: ['GET', 'POST'], credentials: true },
 });
 setupSocketHandlers(io);
 
@@ -23,10 +42,7 @@ setupSocketHandlers(io);
 app.set('io', io);
 
 // ── Middleware ────────────────────────────────────────────────────
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true,
-}));
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
