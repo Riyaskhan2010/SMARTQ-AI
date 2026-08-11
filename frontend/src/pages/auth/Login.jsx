@@ -6,17 +6,18 @@ import { useLanguage } from '../../context/LanguageContext';
 import toast from 'react-hot-toast';
 
 const DEMO_ACCOUNTS = [
-  { role: 'USER',  email: 'demo.user@smartq.ai',  icon: User,   color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/30' },
-  { role: 'ADMIN', email: 'demo.admin@smartq.ai', icon: Shield, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
-  { role: 'STAFF', email: 'demo.staff@smartq.ai', icon: Wrench, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+  { role: 'USER',  label: 'Login as User',  email: 'demo.user@smartq.ai',  icon: User,   color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/30',   dest: '/dashboard' },
+  { role: 'ADMIN', label: 'Login as Admin', email: 'demo.admin@smartq.ai', icon: Shield, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30', dest: '/admin' },
+  { role: 'STAFF', label: 'Login as Staff', email: 'demo.staff@smartq.ai', icon: Wrench, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', dest: '/staff/setup' },
 ];
 
 export default function Login() {
   const { login }   = useAuth();
   const { t }       = useLanguage();
   const navigate    = useNavigate();
-  const [form, setForm]   = useState({ email: '', password: '' });
+  const [form, setForm]       = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(null); // stores role while loading
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +37,18 @@ export default function Login() {
     }
   };
 
-  const fillDemo = (email) => setForm({ email, password: 'demo123' });
+  const handleDemoLogin = async (account) => {
+    setDemoLoading(account.role);
+    try {
+      await login(account.email, 'demo123');
+      toast.success(`Logged in as ${account.role.charAt(0) + account.role.slice(1).toLowerCase()}`);
+      navigate(account.dest);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Demo login failed');
+    } finally {
+      setDemoLoading(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-navy-900 flex items-center justify-center p-4">
@@ -52,6 +64,7 @@ export default function Login() {
           <p className="text-slate-500 text-sm">{t('tagline')}</p>
         </div>
 
+        {/* Login card */}
         <div className="card p-8">
           <h2 className="text-xl font-semibold text-white mb-6">{t('signIn')}</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -72,7 +85,9 @@ export default function Login() {
               </div>
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2 py-3">
-              {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('signIn')} <ChevronRight size={18} /></>}
+              {loading
+                ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                : <>{t('signIn')} <ChevronRight size={18} /></>}
             </button>
           </form>
 
@@ -81,22 +96,29 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Demo accounts */}
+        {/* Quick Demo section */}
         <div className="mt-6">
-          <p className="text-xs text-slate-600 text-center mb-3 uppercase tracking-wider">{t('demoCredentials')}</p>
-          <div className="space-y-2">
-            {DEMO_ACCOUNTS.map(({ role, email, icon: Icon, color, bg, border }) => (
-              <button key={role} onClick={() => fillDemo(email)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl border ${border} ${bg} hover:opacity-80 transition-opacity text-left`}>
-                <Icon size={16} className={color} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-white">{role}</p>
-                  <p className="text-xs text-slate-500 truncate">{email} / demo123</p>
-                </div>
-                <ChevronRight size={14} className="text-slate-600" />
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex-1 h-px bg-surface-border" />
+            <p className="text-xs text-slate-600 uppercase tracking-wider">Quick Demo</p>
+            <div className="flex-1 h-px bg-surface-border" />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {DEMO_ACCOUNTS.map(({ role, label, icon: Icon, color, bg, border }) => (
+              <button
+                key={role}
+                onClick={() => handleDemoLogin(DEMO_ACCOUNTS.find(a => a.role === role))}
+                disabled={!!demoLoading}
+                className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border ${border} ${bg}
+                  transition-all hover:opacity-90 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-wait`}>
+                {demoLoading === role
+                  ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  : <Icon size={18} className={color} />}
+                <span className="text-xs font-semibold text-white leading-tight text-center">{label}</span>
               </button>
             ))}
           </div>
+          <p className="text-center text-xs text-slate-700 mt-2">One click — no credentials needed</p>
         </div>
       </div>
     </div>
