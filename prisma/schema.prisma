@@ -1,0 +1,400 @@
+// SmartQ AI - Prisma Schema
+// Intelligent Queue & Service Management Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserRole {
+  USER
+  ADMIN
+  STAFF
+}
+
+enum TokenStatus {
+  WAITING
+  SERVING
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+}
+
+enum CounterStatus {
+  OPEN
+  CLOSED
+  PAUSED
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationType {
+  TOKEN_BOOKED
+  TOKEN_CALLED
+  TOKEN_COMPLETED
+  ETA_UPDATED
+  QUEUE_UPDATED
+  COUNTER_OPENED
+  COUNTER_PAUSED
+  SYSTEM
+}
+
+enum QueueEventType {
+  TOKEN_CREATED
+  TOKEN_CALLED
+  TOKEN_STARTED
+  TOKEN_COMPLETED
+  TOKEN_NO_SHOW
+  TOKEN_CANCELLED
+  COUNTER_OPENED
+  COUNTER_CLOSED
+  COUNTER_PAUSED
+  COUNTER_RESUMED
+  ETA_RECALCULATED
+}
+
+enum CrowdLevel {
+  LOW
+  MEDIUM
+  HIGH
+  VERY_HIGH
+}
+
+// ============================================================
+// USER & AUTH
+// ============================================================
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         UserRole @default(USER)
+  language     String   @default("en")
+  isActive     Boolean  @default(true)
+  isDemo       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  tokens        Token[]
+  appointments  Appointment[]
+  visitHistory  VisitHistory[]
+  notifications Notification[]
+  staffProfile  Staff?
+
+  @@map("users")
+}
+
+// ============================================================
+// ORGANIZATION HIERARCHY
+// ============================================================
+
+model Sector {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  icon        String?
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  organizations Organization[]
+
+  @@map("sectors")
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  shortName   String?
+  sectorId    String
+  address     String
+  city        String   @default("Chennai")
+  state       String   @default("Tamil Nadu")
+  pincode     String?
+  phone       String?
+  email       String?
+  website     String?
+  latitude    Float    @default(13.0827)
+  longitude   Float    @default(80.2707)
+  description String?
+  isDemo      Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  openTime    String   @default("09:00")
+  closeTime   String   @default("17:00")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sector      Sector       @relation(fields: [sectorId], references: [id])
+  departments Department[]
+  staff       Staff[]
+
+  @@map("organizations")
+}
+
+model Department {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  services     Service[]
+  counters     Counter[]
+
+  @@map("departments")
+}
+
+model Service {
+  id             String   @id @default(uuid())
+  departmentId   String
+  name           String
+  description    String?
+  avgServiceTime Int      @default(5) // minutes
+  maxTokensPerDay Int     @default(200)
+  requiresAppointment Boolean @default(false)
+  fee            Float?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  department   Department @relation(fields: [departmentId], references: [id])
+  counters     CounterService[]
+  tokens       Token[]
+  appointments Appointment[]
+
+  @@map("services")
+}
+
+// ============================================================
+// COUNTER & STAFF
+// ============================================================
+
+model Counter {
+  id           String        @id @default(uuid())
+  departmentId String
+  name         String
+  number       Int
+  status       CounterStatus @default(CLOSED)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  department Department       @relation(fields: [departmentId], references: [id])
+  staff      Staff[]
+  services   CounterService[]
+  tokens     Token[]
+
+  @@map("counters")
+}
+
+model CounterService {
+  counterId String
+  serviceId String
+
+  counter Counter @relation(fields: [counterId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@id([counterId, serviceId])
+  @@map("counter_services")
+}
+
+model Staff {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  organizationId String
+  counterId      String?
+  employeeId     String?
+  designation    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  counter      Counter?     @relation(fields: [counterId], references: [id])
+
+  @@map("staff")
+}
+
+// ============================================================
+// QUEUE & TOKEN
+// ============================================================
+
+model Queue {
+  id           String   @id @default(uuid())
+  departmentId String   @unique
+  date         DateTime @default(now())
+  tokenPrefix  String   @default("A")
+  lastNumber   Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tokens Token[]
+
+  @@map("queues")
+}
+
+model Token {
+  id              String      @id @default(uuid())
+  queueId         String
+  userId          String?
+  serviceId       String
+  counterId       String?
+  tokenNumber     String
+  status          TokenStatus @default(WAITING)
+  position        Int
+  isFollowUp      Boolean     @default(false)
+  prevVisitDate   DateTime?
+  notes           String?
+  bookedAt        DateTime    @default(now())
+  calledAt        DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  estimatedWait   Int?        // minutes
+  actualWait      Int?        // minutes
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  queue   Queue   @relation(fields: [queueId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
+  counter Counter? @relation(fields: [counterId], references: [id])
+
+  @@map("tokens")
+}
+
+// ============================================================
+// APPOINTMENT
+// ============================================================
+
+model Appointment {
+  id             String            @id @default(uuid())
+  userId         String
+  serviceId      String
+  scheduledDate  DateTime
+  scheduledTime  String
+  status         AppointmentStatus @default(BOOKED)
+  tokenNumber    String?
+  notes          String?
+  isFollowUp     Boolean           @default(false)
+  prevVisitDate  DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@map("appointments")
+}
+
+// ============================================================
+// VISIT HISTORY
+// ============================================================
+
+model VisitHistory {
+  id           String   @id @default(uuid())
+  userId       String
+  tokenId      String?
+  appointmentId String?
+  organizationName String
+  serviceName  String
+  visitDate    DateTime
+  status       String
+  waitTime     Int?     // actual minutes waited
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("visit_history")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// ============================================================
+// QUEUE EVENTS (audit log)
+// ============================================================
+
+model QueueEvent {
+  id         String         @id @default(uuid())
+  queueId    String?
+  tokenId    String?
+  counterId  String?
+  eventType  QueueEventType
+  data       Json?
+  triggeredBy String?
+  createdAt  DateTime       @default(now())
+
+  @@map("queue_events")
+}
+
+// ============================================================
+// AI PREDICTIONS
+// ============================================================
+
+model Prediction {
+  id             String     @id @default(uuid())
+  queueId        String
+  estimatedWait  Int        // minutes
+  crowdLevel     CrowdLevel
+  confidence     Float      // 0-1
+  activeCounters Int
+  waitingCount   Int
+  avgServiceTime Float
+  noShowRate     Float
+  recommendation String?
+  createdAt      DateTime   @default(now())
+
+  @@map("predictions")
+}
+
+model Recommendation {
+  id          String   @id @default(uuid())
+  queueId     String
+  message     String
+  action      String
+  expectedETA Int?     // minutes after action
+  currentETA  Int?     // minutes before action
+  isAccepted  Boolean  @default(false)
+  acceptedBy  String?
+  acceptedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@map("recommendations")
+}
