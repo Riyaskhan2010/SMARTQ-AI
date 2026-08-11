@@ -14,6 +14,8 @@ frontend/.env
 *.db
 *.sqlite
 *.sqlite3
+# SQLite migration history — only valid locally, not for PostgreSQL production
+backend/prisma/migrations/
 
 # ── Build outputs ─────────────────────────────────────────────────
 frontend/dist/
