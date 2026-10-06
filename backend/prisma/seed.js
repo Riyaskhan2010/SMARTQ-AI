@@ -51,18 +51,18 @@ async function main() {
   const hash = (p) => bcrypt.hashSync(p, 10);
 
   const demoUser = await prisma.user.create({ data: {
-    id: uuidv4(), name: 'Demo User', email: 'demo.user@smartq.ai',
-    phone: '+91 98765 43210', passwordHash: hash('demo123'),
+    id: uuidv4(), name: 'Thirunesh K', email: 'demo.user@smartq.ai',
+    phone: '+91 98765 43210', passwordHash: hash('THIRU123'),
     role: 'USER', language: 'en', isDemo: true
   }});
   const demoAdmin = await prisma.user.create({ data: {
-    id: uuidv4(), name: 'Demo Admin', email: 'demo.admin@smartq.ai',
-    phone: '+91 98765 43211', passwordHash: hash('demo123'),
+    id: uuidv4(), name: 'Riyaskhan S', email: 'demo.admin@smartq.ai',
+    phone: '+91 98765 43211', passwordHash: hash('RIYAS123'),
     role: 'ADMIN', language: 'en', isDemo: true
   }});
   const demoStaff1 = await prisma.user.create({ data: {
-    id: uuidv4(), name: 'Staff - Counter 1', email: 'demo.staff@smartq.ai',
-    phone: '+91 98765 43212', passwordHash: hash('demo123'),
+    id: uuidv4(), name: 'Rema Prinitha T', email: 'demo.staff@smartq.ai',
+    phone: '+91 98765 43212', passwordHash: hash('PRINI123'),
     role: 'STAFF', language: 'en', isDemo: true
   }});
   const demoStaff2 = await prisma.user.create({ data: {

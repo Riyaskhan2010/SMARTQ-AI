@@ -18,9 +18,9 @@ const ROLES = [
 // uiUser/uiPass = what the user types in the UI
 // email/backendPass = what gets sent to the backend API
 const ROLE_CREDS = {
-  USER:  { uiUser: 'THIRUNESH', uiPass: 'THIRU123', email: 'demo.user@smartq.ai',  backendPass: 'demo123', dest: '/dashboard'   },
-  ADMIN: { uiUser: 'RIYASKHAN', uiPass: 'RIYAS123', email: 'demo.admin@smartq.ai', backendPass: 'demo123', dest: '/admin'       },
-  STAFF: { uiUser: 'PRINITHA',  uiPass: 'PRINI123', email: 'demo.staff@smartq.ai', backendPass: 'demo123', dest: '/staff/setup' },
+  USER:  { uiUser: 'THIRUNESH', uiPass: 'THIRU123', email: 'demo.user@smartq.ai',  backendPass: 'THIRU123', dest: '/dashboard'   },
+  ADMIN: { uiUser: 'RIYASKHAN', uiPass: 'RIYAS123', email: 'demo.admin@smartq.ai', backendPass: 'RIYAS123', dest: '/admin'       },
+  STAFF: { uiUser: 'PRINITHA',  uiPass: 'PRINI123', email: 'demo.staff@smartq.ai', backendPass: 'PRINI123', dest: '/staff/setup' },
 };
 
 export default function Login() {
