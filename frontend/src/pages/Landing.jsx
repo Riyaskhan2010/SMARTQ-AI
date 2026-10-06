@@ -947,57 +947,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── 12. TEAM MEMBERS ──────────────────────────────────── */}
-      <section className="bg-surface-card/20 border-y border-surface-border py-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Heading */}
-          <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">Team Members</h2>
-            <p className="text-slate-500">SmartQ AI — Hackathon 2026</p>
-          </div>
-
-          {/* Members row */}
-          <div className="flex flex-wrap justify-center gap-12 sm:gap-16 lg:gap-20">
-            {[
-              { name: 'Rema Prinitha T', photo: '/rema.jpeg',     initials: 'RP' },
-              { name: 'Stephen V',       photo: '/stephen.jpg',  initials: 'SV' },
-              { name: 'Thirunesh K',     photo: '/thirunesh.jpg',initials: 'TK' },
-            ].map(({ name, photo, initials }) => (
-              <div key={name} className="flex flex-col items-center gap-5 group">
-
-                {/* Photo circle */}
-                <div className="relative">
-                  {/* Hover glow */}
-                  <div className="absolute -inset-2 bg-gradient-to-br from-brand/25 to-electric/15 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                  {/* Ring */}
-                  <div className="relative w-40 h-40 sm:w-44 sm:h-44 lg:w-48 lg:h-48 rounded-full p-[3px] bg-gradient-to-br from-brand/50 to-electric/30 shadow-xl shadow-brand/10">
-                    <div className="w-full h-full rounded-full overflow-hidden bg-navy-800">
-                      {photo ? (
-                        <img
-                          src={photo}
-                          alt={name}
-                          className="w-full h-full object-cover object-top"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-navy-700 to-navy-800">
-                          <span className="text-4xl font-extrabold text-brand/60">{initials}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Name */}
-                <p className="text-base sm:text-lg font-semibold text-white text-center tracking-wide">
-                  {name}
-                </p>
-
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── FINAL CTA ─────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="card p-10 sm:p-16 text-center border-brand/20 bg-gradient-to-br from-brand/8 via-navy-800 to-electric/5 relative overflow-hidden">
